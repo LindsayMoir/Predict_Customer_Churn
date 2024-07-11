@@ -1,0 +1,18 @@
+Atbi227!qb2024-07-11 12:49:34,566 - INFO - SUCCESS: Started run at 2024-07-11 12:49:34.566466.
+2024-07-11 12:49:34,620 - INFO - SUCCESS: import_eda: Loading data/bank_data.csv
+2024-07-11 12:49:34,620 - INFO - SUCCESS: Read file data/bank_data.csv
+2024-07-11 12:49:34,709 - INFO - SUCCESS: Completed perform_eda
+2024-07-11 12:49:36,689 - INFO - SUCCESS: Completed writing artifacts/coef_list.txt
+2024-07-11 12:49:36,689 - INFO - SUCCESS: Completed eda_plots
+2024-07-11 12:49:37,284 - INFO - SUCCESS: perform_feature_engineering completed (7088, 19), (3039, 19), (7088,), (3039,)
+2024-07-11 12:49:37,284 - INFO - SUCCESS: Completed perform_feature_engineering
+2024-07-11 12:50:18,850 - INFO - SUCCESS: Completed train_models
+2024-07-11 12:50:19,008 - INFO - SUCCESS: Completed Random Forest predictions
+2024-07-11 12:50:19,011 - INFO - SUCCESS: Completed Logistic Regression predictions
+2024-07-11 12:50:19,146 - INFO - SUCCESS: Completed scoring the models and writing the log file to disk.
+2024-07-11 12:50:19,324 - INFO - SUCCESS: Completed reloading the Random Forest model.
+2024-07-11 12:50:19,326 - INFO - SUCCESS: Completed reloading the Logistic Regression model.
+2024-07-11 12:50:19,955 - INFO - SUCCESS: Completed plots_from_modelling.
+2024-07-11 12:50:20,391 - INFO - SUCCESS: Completed classificaton_report_image.
+2024-07-11 12:51:48,833 - INFO - SUCCESS: Completed feature_importance.
+2024-07-11 12:51:48,837 - INFO - SUCCESS: Completed entire modelling run at 2024-07-11 12:51:48.837392!
