@@ -2,6 +2,9 @@
 """
 This program predicts customer churn. It is implemented in a modular way to expedite the
 use of test suites. It also logs activities to make it easier to run and debug in production.
+
+Author: Lindsay Moir
+Creation Date: July 12, 2024
 """
 
 # Import Libraries
@@ -33,21 +36,29 @@ os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 LOG_FILE_PATH = 'logs/churn_modelling_metrics_log.csv'  # For modelling run metrics
 LOGGING_PATH = 'logs/churn_library.log'  # For logging of each function
-DATA_PATH = "data/bank_data.csv"
+DATA_PATH = "data/bank_data.csv" # Path to the data
 
 # for the coefficients of the features realted to churn
 COEF_LIST_PATH = 'artifacts/coef_list.txt'
 
+# Saved model paths
 MODEL_RF_PATH = "models/rfc_model.pkl"
 MODEL_LR_PATH = "models/logistic_model.pkl"
 
 
-# Import Data
 def import_data(path):
     """
-    Import the data from the path provided and return a pandas dataframe
-    """
+    Import the data from the path provided and return a pandas dataframe.
 
+    Parameters:
+    path (str): The file path to the data.
+
+    Returns:
+    pd.DataFrame: The data loaded into a pandas DataFrame.
+
+    Raises:
+    FileNotFoundError: If the file at the provided path does not exist.
+    """
     try:
         df = pd.read_csv(path, index_col=0)
         logging.info("SUCCESS: import_eda: Loading %s", path)
@@ -58,41 +69,42 @@ def import_data(path):
     return df
 
 
-# Perform EDA
 def perform_eda(df):
     """
-    Perform EDA on the data and return the cleaned data
-    """
+    Perform EDA on the data and return the cleaned data.
 
+    Parameters:
+    df (pd.DataFrame): The input data.
+
+    Returns:
+    pd.DataFrame: The cleaned data.
+    """
     # Check the size
     if df.shape[0] > 1000 and df.shape[1] > 20:
         pass
     else:
-        logging.error("ERROR:There are nulls. Logistic Regression will fail.")
-
+        logging.error("ERROR: Data does not meet the size requirements.")
+    
     # Check for nulls
     if df.isnull().sum().sum() == 0:
         pass
     else:
-        logging.error("ERROR:There are nulls. Logistic Regression will fail.")
-
+        logging.error("ERROR: There are nulls. Logistic Regression will fail.")
+    
     # For console output
     print(df.describe())
-
+    
     # Check for duplicates
     dups = df[df.duplicated()]
     if dups.shape[0] == 0:
         pass
     else:
-        logging.error(
-            "ERROR:There are duplicates. Duplicate cleaning code does not exist in this program.")
-
-    # Create a churn column to enable further analysis and then drop that
-    # column
-    df['Churn'] = df['Attrition_Flag'].apply(
-        lambda val: 0 if val == "Existing Customer" else 1)
+        logging.error("ERROR: There are duplicates. Duplicate cleaning code does not exist in this program.")
+    
+    # Create a churn column to enable further analysis and then drop that column
+    df['Churn'] = df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
     df.drop(columns=["Attrition_Flag"], inplace=True)
-
+    
     return df
 
 
@@ -100,10 +112,12 @@ def perform_eda(df):
 def eda_plots(df, coef_list_path):
     """
     Create EDA plots and save them as artifacts.
+
+    Parameters:
+    df (pd.DataFrame): The input data.
+    coef_list_path (str): The path to save the coefficients list.
     """
-
     # Produce plots and save as artifacts
-
     plt.figure(figsize=(20, 10))
     df['Churn'].hist()
     plt.savefig('images/eda/Churn_hist.png')
@@ -113,7 +127,7 @@ def eda_plots(df, coef_list_path):
     plt.savefig('images/eda/Customer_Age_hist.png')
 
     plt.figure(figsize=(20, 10))
-    df.Marital_Status.value_counts('normalize').plot(kind='bar')
+    df['Marital_Status'].value_counts(normalize=True).plot(kind='bar')
     plt.savefig('images/eda/Marital_Status_bar.png')
 
     # Suppress all warnings
@@ -132,13 +146,9 @@ def eda_plots(df, coef_list_path):
     sns.heatmap(numeric_df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
     plt.savefig('images/eda/Correlation_Heat_Map.png')
 
-    # We are predicting Churn. Lets look at that in particular
-    coef_list = [(df['Churn'].corr(numeric_df[col]), col)
-                 for col in numeric_df]
+    # We are predicting Churn. Let's look at that in particular
+    coef_list = [(df['Churn'].corr(numeric_df[col]), col) for col in numeric_df]
     coef_list.sort(reverse=True)
-
-    # Specify the file path where you want to save the text file
-    coef_list_path = 'artifacts/coef_list.txt'
 
     # Write the coefficients to the text file
     with open(coef_list_path, 'w', encoding='utf-8') as file:
@@ -152,36 +162,46 @@ def eda_plots(df, coef_list_path):
 def encoder_helper(df, cols):
     """
     Create new columns in the dataframe that show the churn rate for each
-    category in the categorical columns
-    """
+    category in the categorical columns.
 
+    Parameters:
+    df (pd.DataFrame): The input data.
+    cols (list): List of categorical columns to encode.
+
+    Returns:
+    pd.DataFrame: The dataframe with new encoded columns.
+    """
     for col in cols:
         groups = df[[col, 'Churn']].groupby(col).mean()['Churn']
-        df[col + '_Churn'] = [groups.loc[val] for val in df[col]]
+        df[col + '_Churn'] = df[col].map(groups)
 
     return df
-
-# Perform Feature Engineering
 
 
 def perform_feature_engineering(df, cat_columns):
     """
     Perform feature engineering and return the train and test data. Since we are encoding
-    the actual churn rate into the new quantitative columns called 'Categorical_Column_Churn,
+    the actual churn rate into the new quantitative columns called 'Categorical_Column_Churn',
     we will need to make sure that there is no data leakage between the train and test data.
     This will require us to run encoder_helper AFTER we have done the train test split.
-    """
 
+    Parameters:
+    df (pd.DataFrame): The input data.
+    cat_columns (list): List of categorical columns to encode.
+
+    Returns:
+    tuple: X_train, X_test, y_train, y_test dataframes.
+    """
     # Create X and y
     y = df['Churn']
     X = df.drop(columns=['Churn', 'CLIENTNUM'])
 
-    # train test split
+    # Train test split
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.3, random_state=42)
+        X, y, test_size=0.3, random_state=42
+    )
 
-    # Concatenate the dataframes back togehter now that you have the train
-    # test split
+    # Concatenate the dataframes back together now that you have the train test split
     X_train['Churn'] = y_train
     X_test['Churn'] = y_test
 
@@ -196,7 +216,7 @@ def perform_feature_engineering(df, cat_columns):
     # Keep only quantitative columns
     numeric_columns = X_train.select_dtypes(include=['number'])
 
-    # Update X_train and X_test to include only the numeric columns:
+    # Update X_train and X_test to include only the numeric columns
     X_train = X_train[numeric_columns.columns]
     X_test = X_test[numeric_columns.columns]
 
@@ -213,14 +233,16 @@ def perform_feature_engineering(df, cat_columns):
 def train_models(X_train, y_train):
     """
     Train each model and return the best model.
+
+    Parameters:
+    X_train (pd.DataFrame): Training features.
+    y_train (pd.Series): Training labels.
+
+    Returns:
+    tuple: Trained RandomForestClassifier and LogisticRegression models.
     """
-
-    # grid search
+    # Grid search for RandomForestClassifier
     rfc = RandomForestClassifier(random_state=42)
-    # Use a different solver if the default 'lbfgs' fails to converge
-    # Reference:
-    # https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
-
     param_grid = {
         'n_estimators': [200, 500],
         'max_features': ['auto', 'sqrt'],
@@ -228,12 +250,12 @@ def train_models(X_train, y_train):
         'criterion': ['gini', 'entropy']
     }
 
-    # Train and fit Random Forst
     cv_rfc = GridSearchCV(
         estimator=rfc,
         param_grid=param_grid,
         cv=5,
-        n_jobs=-1)
+        n_jobs=-1
+    )
     cv_rfc.fit(X_train, y_train)
 
     # Train and fit Logistic Regression
@@ -245,24 +267,35 @@ def train_models(X_train, y_train):
 
 # Scores
 def scores(
-        model_name,
-        y_test,
-        y_test_preds,
-        y_train,
-        y_train_preds,
-        log_file_path):
+    model_name,
+    y_test,
+    y_test_preds,
+    y_train,
+    y_train_preds,
+    log_file_path
+):
     """
     Calculate the scores and write them to a log file.
+
+    Parameters:
+    model_name (str): Name of the model.
+    y_test (pd.Series): True labels for the test set.
+    y_test_preds (pd.Series): Predicted labels for the test set.
+    y_train (pd.Series): True labels for the train set.
+    y_train_preds (pd.Series): Predicted labels for the train set.
+    log_file_path (str): Path to the log file.
+
+    Returns:
+    None
     """
-
     # Scores
-    print(model_name, 'Results')
+    print(f'{model_name} Results')
 
-    print('test results')
+    print('Test results')
     print('KPI Metric ROC_AUC Score:', roc_auc_score(y_test, y_test_preds))
     print(classification_report(y_test, y_test_preds))
 
-    print('train results')
+    print('Train results')
     print('KPI Metric ROC_AUC Score:', roc_auc_score(y_train, y_train_preds))
     print(classification_report(y_train, y_train_preds))
 
@@ -288,35 +321,43 @@ def scores(
     metrics_df = pd.DataFrame(metrics_data)
 
     try:
-        # Check if log_runs.csv exists
         if os.path.exists(log_file_path):
             # Append to existing file
             metrics_df.to_csv(
                 log_file_path,
                 mode='a',
                 header=False,
-                index=False)
-            print("Metrics appended to log_runs.csv\n")
+                index=False
+            )
+            logging.info("Metrics appended to log_runs.csv")
         else:
             # Create a new file
             metrics_df.to_csv(log_file_path, index=False)
             print("Metrics saved to log_runs.csv\n")
     except IOError as e:
-        print(f"Error occurred writing {log_file_path}: {str(e)}")
+        logging.error("Error occurred writing %s: %s", log_file_path, str(e))
 
-    if roc_auc < .9:
+    if roc_auc < 0.9 and model_name == 'Random Forest':
         logging.error(
-            "ERROR: The ROC_AUC score is less than .9. This model is not performing well.")
+            "ERROR: The %s ROC_AUC score at %s is < .9., model_name, roc_auc.")
     else:
-        logging.info("SUCCESS: The ROC_AUC score is %s", roc_auc)
+        logging.info("SUCCESS: The %s ROC_AUC score is %s", model_name, roc_auc)
 
 
 # Plots From Modelling
 def plots_from_modelling(cv_rfc, lrc, X_test, y_test):
     """
     Create plots from the modelling results.
-    """
 
+    Parameters:
+    cv_rfc (GridSearchCV): Trained RandomForestClassifier with GridSearchCV.
+    lrc (LogisticRegression): Trained LogisticRegression model.
+    X_test (pd.DataFrame): Test features.
+    y_test (pd.Series): Test labels.
+
+    Returns:
+    None
+    """
     # Logistic Regression ROC Curve plot
     lrc_plot = RocCurveDisplay.from_estimator(lrc, X_test, y_test)
     plt.savefig('images/results/lrc_plot_auc.png')
@@ -325,59 +366,67 @@ def plots_from_modelling(cv_rfc, lrc, X_test, y_test):
     plt.figure(figsize=(15, 8))
     ax = plt.gca()
     RocCurveDisplay.from_estimator(
-        cv_rfc.best_estimator_, X_test, y_test, ax=ax, alpha=0.8)
+        cv_rfc.best_estimator_, X_test, y_test, ax=ax, alpha=0.8
+    )
     lrc_plot.plot(ax=ax, alpha=0.8)
     plt.savefig('images/results/rfc_lrc_plot_auc.png')
 
+
 # Classification Report Image
-
-
-def classificaton_report_image(
-        name,
-        y_train,
-        y_train_preds,
-        y_test,
-        y_test_preds):
+def classification_report_image(name, y_train, y_train_preds, y_test, y_test_preds):
     """
     Create a classification report image.
-    """
 
-    # Classification report for Logistic Regression
+    Parameters:
+    name (str): Name of the model.
+    y_train (pd.Series): True labels for the training set.
+    y_train_preds (pd.Series): Predicted labels for the training set.
+    y_test (pd.Series): True labels for the test set.
+    y_test_preds (pd.Series): Predicted labels for the test set.
+
+    Returns:
+    None
+    """
+    # Classification report for the model
     plt.rc('figure', figsize=(5, 5))
-    plt.text(0.01, 1.25, str(name + ' Train'),
-             {'fontsize': 10}, fontproperties='monospace')
+    
+    plt.text(0.01, 1.25, f'{name} Train', {'fontsize': 10}, fontproperties='monospace')
     plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds)), {
-             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
-    plt.text(0.01, 0.6, str(name + ' Test'),
-             {'fontsize': 10}, fontproperties='monospace')
+             'fontsize': 10}, fontproperties='monospace')
+    
+    plt.text(0.01, 0.6, f'{name} Test', {'fontsize': 10}, fontproperties='monospace')
     plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds)), {
-             'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
+             'fontsize': 10}, fontproperties='monospace')
+    
     plt.axis('off')
-    path = 'images/results/Classfication_Report_' + name + '.png'
+    path = f'images/results/Classification_Report_{name}.png'
     plt.savefig(path)
+    plt.close()
 
 
 # Feature Importance
 def feature_importance(cv_rfc, X_train, X_test):
     """
     Calculate the feature importance and create a plot.
-    """
 
+    Parameters:
+    cv_rfc (GridSearchCV): Trained RandomForestClassifier with GridSearchCV.
+    X_train (pd.DataFrame): Training features.
+    X_test (pd.DataFrame): Test features.
+
+    Returns:
+    None
+    """
     # Shap plot
     explainer = shap.TreeExplainer(cv_rfc.best_estimator_)
     shap_values = explainer.shap_values(X_test)
     plt.figure()
     shap.summary_plot(shap_values, X_test, plot_type="bar", show=False)
-    plt.savefig('images/results/Shap Tree Explainer.png')
+    plt.savefig('images/results/shap_tree_explainer.png')
 
     # Calculate feature importances
     importances = cv_rfc.best_estimator_.feature_importances_
 
-    # Sort feature importances in descending order
-    indices = np.argsort(importances)[::-1]
-
-    # Calculate feature importances
-    importances = cv_rfc.best_estimator_.feature_importances_
     # Sort feature importances in descending order
     indices = np.argsort(importances)[::-1]
 
@@ -386,48 +435,49 @@ def feature_importance(cv_rfc, X_train, X_test):
 
     # Create plot
     plt.figure(figsize=(20, 5))
-
-    # Create plot title
     plt.title("Feature Importance")
     plt.ylabel('Importance')
-
-    # Add bars
     plt.bar(range(X_train.shape[1]), importances[indices])
-
-    # Add feature names as x-axis labels
     plt.xticks(range(X_train.shape[1]), names, rotation=90)
 
     plt.savefig('images/results/feature_importance.png')
 
+
 # Driver
-
-
 def driver(path, log_file_path, coef_list_path, model_rf_path, model_lr_path):
     """
     Run the entire modelling process.
-    """
 
-    # load data
+    Parameters:
+    path (str): Path to the input data file.
+    log_file_path (str): Path to the log file.
+    coef_list_path (str): Path to save the coefficient list.
+    model_rf_path (str): Path to save the Random Forest model.
+    model_lr_path (str): Path to save the Logistic Regression model.
+
+    Returns:
+    None
+    """
+    # Load data
     df = import_data(path)
     logging.info("SUCCESS: Read file %s", path)
 
-    # perform eda
+    # Perform EDA
     df = perform_eda(df)
     logging.info("SUCCESS: Completed perform_eda")
 
-    # eda plots
+    # EDA plots
     eda_plots(df, coef_list_path)
     logging.info("SUCCESS: Completed eda_plots")
 
     # Perform feature engineering and deal with the categorical columns
     X_train, X_test, y_train, y_test = perform_feature_engineering(
-        df, df.select_dtypes(include=['object']).columns)
+        df, df.select_dtypes(include=['object']).columns
+    )
     logging.info(
         "SUCCESS: perform_feature_engineering completed %s, %s, %s, %s",
-        X_train.shape,
-        X_test.shape,
-        y_train.shape,
-        y_test.shape)
+        X_train.shape, X_test.shape, y_train.shape, y_test.shape
+    )
     logging.info("SUCCESS: Completed perform_feature_engineering")
 
     # Suppress all warnings
@@ -437,17 +487,14 @@ def driver(path, log_file_path, coef_list_path, model_rf_path, model_lr_path):
     cv_rfc, lrc = train_models(X_train, y_train)
     logging.info("SUCCESS: Completed train_models")
 
-    # To turn warnings back on:
+    # Turn warnings back on
     warnings.filterwarnings("default")
 
     # Predict using both models
-
-    # Random Forest
     y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
     y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
     logging.info("SUCCESS: Completed Random Forest predictions")
 
-    # Logistic Regression
     y_train_preds_lr = lrc.predict(X_train)
     y_test_preds_lr = lrc.predict(X_test)
     logging.info("SUCCESS: Completed Logistic Regression predictions")
@@ -459,18 +506,19 @@ def driver(path, log_file_path, coef_list_path, model_rf_path, model_lr_path):
         y_test_preds_rf,
         y_train,
         y_train_preds_rf,
-        log_file_path)
+        log_file_path
+    )
     scores(
         'Logistic Regression',
         y_test,
         y_test_preds_lr,
         y_train,
         y_train_preds_lr,
-        log_file_path)
-    logging.info(
-        "SUCCESS: Completed scoring the models and writing the log file to disk.")
+        log_file_path
+    )
+    logging.info("SUCCESS: Completed scoring the models and writing the log file to disk.")
 
-    # save best model
+    # Save best model
     joblib.dump(cv_rfc.best_estimator_, model_rf_path)
     joblib.dump(lrc, model_lr_path)
 
@@ -480,27 +528,28 @@ def driver(path, log_file_path, coef_list_path, model_rf_path, model_lr_path):
         logging.info("SUCCESS: Completed reloading the Random Forest model.")
     lr_model = joblib.load(model_lr_path)
     if lr_model:
-        logging.info(
-            "SUCCESS: Completed reloading the Logistic Regression model.")
+        logging.info("SUCCESS: Completed reloading the Logistic Regression model.")
 
     # Plots from modelling
     plots_from_modelling(cv_rfc, lrc, X_test, y_test)
     logging.info("SUCCESS: Completed plots_from_modelling.")
 
     # Classification reports
-    classificaton_report_image(
+    classification_report_image(
         'Logistic Regression',
         y_train,
         y_train_preds_lr,
         y_test,
-        y_test_preds_lr)
-    classificaton_report_image(
+        y_test_preds_lr
+    )
+    classification_report_image(
         'Random Forest',
         y_train,
         y_train_preds_rf,
         y_test,
-        y_test_preds_rf)
-    logging.info("SUCCESS: Completed classificaton_report_image.")
+        y_test_preds_rf
+    )
+    logging.info("SUCCESS: Completed classification_report_image.")
 
     # Feature importance
     feature_importance(cv_rfc, X_train, X_test)
