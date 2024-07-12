@@ -8,6 +8,15 @@ Creation Date: July 12, 2024
 """
 
 # Import Libraries
+from logging_config import setup_logging
+import joblib
+import warnings
+import shap
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.metrics import roc_auc_score, RocCurveDisplay, classification_report, \
+    precision_score, recall_score, accuracy_score, f1_score
 import logging
 import os
 from datetime import datetime
@@ -17,17 +26,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()
 
-from sklearn.metrics import roc_auc_score, RocCurveDisplay, classification_report, \
-    precision_score, recall_score, accuracy_score, f1_score
-from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-
-import shap
-import warnings
-import joblib
-
-from logging_config import setup_logging
 
 # Set the QT_QPA_PLATFORM environment variable to 'offscreen'.
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
@@ -36,7 +34,7 @@ os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 LOG_FILE_PATH = 'logs/churn_modelling_metrics_log.csv'  # For modelling run metrics
 LOGGING_PATH = 'logs/churn_library.log'  # For logging of each function
-DATA_PATH = "data/bank_data.csv" # Path to the data
+DATA_PATH = "data/bank_data.csv"  # Path to the data
 
 # for the coefficients of the features realted to churn
 COEF_LIST_PATH = 'artifacts/coef_list.txt'
@@ -84,27 +82,30 @@ def perform_eda(df):
         pass
     else:
         logging.error("ERROR: Data does not meet the size requirements.")
-    
+
     # Check for nulls
     if df.isnull().sum().sum() == 0:
         pass
     else:
         logging.error("ERROR: There are nulls. Logistic Regression will fail.")
-    
+
     # For console output
     print(df.describe())
-    
+
     # Check for duplicates
     dups = df[df.duplicated()]
     if dups.shape[0] == 0:
         pass
     else:
-        logging.error("ERROR: There are duplicates. Duplicate cleaning code does not exist in this program.")
-    
-    # Create a churn column to enable further analysis and then drop that column
-    df['Churn'] = df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
+        logging.error(
+            "ERROR: There are duplicates. Duplicate cleaning code does not exist in this program.")
+
+    # Create a churn column to enable further analysis and then drop that
+    # column
+    df['Churn'] = df['Attrition_Flag'].apply(
+        lambda val: 0 if val == "Existing Customer" else 1)
     df.drop(columns=["Attrition_Flag"], inplace=True)
-    
+
     return df
 
 
@@ -147,7 +148,8 @@ def eda_plots(df, coef_list_path):
     plt.savefig('images/eda/Correlation_Heat_Map.png')
 
     # We are predicting Churn. Let's look at that in particular
-    coef_list = [(df['Churn'].corr(numeric_df[col]), col) for col in numeric_df]
+    coef_list = [(df['Churn'].corr(numeric_df[col]), col)
+                 for col in numeric_df]
     coef_list.sort(reverse=True)
 
     # Write the coefficients to the text file
@@ -201,7 +203,8 @@ def perform_feature_engineering(df, cat_columns):
         X, y, test_size=0.3, random_state=42
     )
 
-    # Concatenate the dataframes back together now that you have the train test split
+    # Concatenate the dataframes back together now that you have the train
+    # test split
     X_train['Churn'] = y_train
     X_test['Churn'] = y_test
 
@@ -341,7 +344,10 @@ def scores(
         logging.error(
             "ERROR: The %s ROC_AUC score at %s is < .9., model_name, roc_auc.")
     else:
-        logging.info("SUCCESS: The %s ROC_AUC score is %s", model_name, roc_auc)
+        logging.info(
+            "SUCCESS: The %s ROC_AUC score is %s",
+            model_name,
+            roc_auc)
 
 
 # Plots From Modelling
@@ -373,7 +379,12 @@ def plots_from_modelling(cv_rfc, lrc, X_test, y_test):
 
 
 # Classification Report Image
-def classification_report_image(name, y_train, y_train_preds, y_test, y_test_preds):
+def classification_report_image(
+        name,
+        y_train,
+        y_train_preds,
+        y_test,
+        y_test_preds):
     """
     Create a classification report image.
 
@@ -389,15 +400,19 @@ def classification_report_image(name, y_train, y_train_preds, y_test, y_test_pre
     """
     # Classification report for the model
     plt.rc('figure', figsize=(5, 5))
-    
-    plt.text(0.01, 1.25, f'{name} Train', {'fontsize': 10}, fontproperties='monospace')
+
+    plt.text(
+        0.01, 1.25, f'{name} Train', {
+            'fontsize': 10}, fontproperties='monospace')
     plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds)), {
              'fontsize': 10}, fontproperties='monospace')
-    
-    plt.text(0.01, 0.6, f'{name} Test', {'fontsize': 10}, fontproperties='monospace')
+
+    plt.text(
+        0.01, 0.6, f'{name} Test', {
+            'fontsize': 10}, fontproperties='monospace')
     plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds)), {
              'fontsize': 10}, fontproperties='monospace')
-    
+
     plt.axis('off')
     path = f'images/results/Classification_Report_{name}.png'
     plt.savefig(path)
@@ -516,7 +531,8 @@ def driver(path, log_file_path, coef_list_path, model_rf_path, model_lr_path):
         y_train_preds_lr,
         log_file_path
     )
-    logging.info("SUCCESS: Completed scoring the models and writing the log file to disk.")
+    logging.info(
+        "SUCCESS: Completed scoring the models and writing the log file to disk.")
 
     # Save best model
     joblib.dump(cv_rfc.best_estimator_, model_rf_path)
@@ -528,7 +544,8 @@ def driver(path, log_file_path, coef_list_path, model_rf_path, model_lr_path):
         logging.info("SUCCESS: Completed reloading the Random Forest model.")
     lr_model = joblib.load(model_lr_path)
     if lr_model:
-        logging.info("SUCCESS: Completed reloading the Logistic Regression model.")
+        logging.info(
+            "SUCCESS: Completed reloading the Logistic Regression model.")
 
     # Plots from modelling
     plots_from_modelling(cv_rfc, lrc, X_test, y_test)

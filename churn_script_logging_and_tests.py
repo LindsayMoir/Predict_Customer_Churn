@@ -14,6 +14,7 @@ LOGGING_PATH = 'logs/churn_script_logging_and_tests.log'
 setup_logging(LOGGING_PATH)
 logging.info("Logging has been set up successfully")
 
+
 def test_import(import_data, data_path):
     """
     Test data import - Tests whether or not the file was loaded successfully.
@@ -67,8 +68,6 @@ def test_perform_eda(perform_eda, df):
         raise err
 
 
-import logging
-
 def test_encoder_helper(encoder_helper, df, cols):
     """
     Test encoder_helper function.
@@ -85,7 +84,7 @@ def test_encoder_helper(encoder_helper, df, cols):
         'Gender_Churn', 'Education_Level_Churn', 'Marital_Status_Churn',
         'Income_Category_Churn', 'Card_Category_Churn'
     ]
-    
+
     try:
         encoded_df = encoder_helper(df, cols)
 
@@ -106,7 +105,8 @@ def test_encoder_helper(encoder_helper, df, cols):
         raise err
 
 
-def test_perform_feature_engineering(perform_feature_engineering, df, cat_columns):
+def test_perform_feature_engineering(
+        perform_feature_engineering, df, cat_columns):
     """
     Test perform_feature_engineering function.
 
@@ -119,13 +119,14 @@ def test_perform_feature_engineering(perform_feature_engineering, df, cat_column
     tuple: X_train, X_test, y_train, y_test.
     """
     try:
-        X_train, X_test, y_train, y_test = perform_feature_engineering(df, cat_columns)
-        
+        X_train, X_test, y_train, y_test = perform_feature_engineering(
+            df, cat_columns)
+
         assert X_train.shape[1] == 19, (
             "The model expects 19 columns. This assertion should be changed "
             "if the number of columns changes."
         )
-        
+
         logging.info("Testing perform_feature_engineering: SUCCESS")
         return X_train, X_test, y_train, y_test
     except AssertionError as err:
@@ -148,14 +149,16 @@ def test_train_models(train_models, X_train, y_train):
     try:
         cv_rfc, lrc = train_models(X_train, y_train)
         assert cv_rfc is not None, "Random Forest Classifier model is not trained. It is None."
-        logging.info("Testing train_models: SUCCESS - Random Forest Classifier trained.")
+        logging.info(
+            "Testing train_models: SUCCESS - Random Forest Classifier trained.")
     except AssertionError as err:
         logging.error("Testing train_models: %s", err)
         raise err
 
     try:
         assert lrc is not None, "Logistic Regression model is not trained. It is None."
-        logging.info("Testing train_models: SUCCESS - Logistic Regression trained.")
+        logging.info(
+            "Testing train_models: SUCCESS - Logistic Regression trained.")
     except AssertionError as err:
         logging.error("Testing train_models: %s", err)
         raise err
@@ -179,7 +182,7 @@ if __name__ == "__main__":
     encoded_df = test_encoder_helper(encoder_helper, df, categorical_columns)
     X_train, X_test, y_train, y_test = test_perform_feature_engineering(
         perform_feature_engineering, encoded_df, categorical_columns)
-    
+
     test_train_models(train_models, X_train, y_train)
 
     logging.info("All tests passed")
