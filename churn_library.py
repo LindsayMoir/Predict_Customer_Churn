@@ -5,6 +5,7 @@ use of test suites. It also logs activities to make it easier to run and debug i
 """
 
 # Import Libraries
+import logging
 import os
 from datetime import datetime
 import numpy as np
@@ -21,7 +22,6 @@ from sklearn.linear_model import LogisticRegression
 
 import shap
 import warnings
-import logging
 import joblib
 
 from logging_config import setup_logging
@@ -303,6 +303,12 @@ def scores(
             print("Metrics saved to log_runs.csv\n")
     except IOError as e:
         print(f"Error occurred writing {log_file_path}: {str(e)}")
+
+    if roc_auc < .9:
+        logging.error(
+            "ERROR: The ROC_AUC score is less than .9. This model is not performing well.")
+    else:
+        logging.info("SUCCESS: The ROC_AUC score is %s", roc_auc)
 
 
 # Plots From Modelling
