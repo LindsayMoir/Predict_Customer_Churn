@@ -493,7 +493,6 @@ def driver(path, log_file_path, coef_list_path, model_rf_path, model_lr_path):
         "SUCCESS: perform_feature_engineering completed %s, %s, %s, %s",
         X_train.shape, X_test.shape, y_train.shape, y_test.shape
     )
-    logging.info("SUCCESS: Completed perform_feature_engineering")
 
     # Suppress all warnings
     warnings.filterwarnings("ignore")
