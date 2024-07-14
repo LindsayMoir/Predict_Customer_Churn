@@ -1,23 +1,22 @@
-2024-07-12 12:49:13,057 - INFO - Logging has been set up successfully
-2024-07-12 12:49:13,057 - INFO - SUCCESS: Started run at 2024-07-12 12:49:13.057784.
-2024-07-12 12:49:13,086 - INFO - SUCCESS: import_eda: Loading data/bank_data.csv
-2024-07-12 12:49:13,086 - INFO - SUCCESS: Read file data/bank_data.csv
-2024-07-12 12:49:13,141 - INFO - SUCCESS: Completed perform_eda
-2024-07-12 12:49:14,976 - INFO - SUCCESS: Completed writing artifacts/coef_list.txt
-2024-07-12 12:49:14,976 - INFO - SUCCESS: Completed eda_plots
-2024-07-12 12:49:15,158 - INFO - SUCCESS: perform_feature_engineering completed (7088, 19), (3039, 19), (7088,), (3039,)
-2024-07-12 12:49:15,158 - INFO - SUCCESS: Completed perform_feature_engineering
-2024-07-12 12:49:56,394 - INFO - SUCCESS: Completed train_models
-2024-07-12 12:49:56,553 - INFO - SUCCESS: Completed Random Forest predictions
-2024-07-12 12:49:56,556 - INFO - SUCCESS: Completed Logistic Regression predictions
-2024-07-12 12:49:56,609 - INFO - Metrics appended to log_runs.csv
-2024-07-12 12:49:56,609 - INFO - SUCCESS: The Random Forest ROC_AUC score is 0.9086375629495262
-2024-07-12 12:49:56,660 - INFO - Metrics appended to log_runs.csv
-2024-07-12 12:49:56,660 - INFO - SUCCESS: The Logistic Regression ROC_AUC score is 0.7274356868316568
-2024-07-12 12:49:56,660 - INFO - SUCCESS: Completed scoring the models and writing the log file to disk.
-2024-07-12 12:49:56,842 - INFO - SUCCESS: Completed reloading the Random Forest model.
-2024-07-12 12:49:56,844 - INFO - SUCCESS: Completed reloading the Logistic Regression model.
-2024-07-12 12:49:57,451 - INFO - SUCCESS: Completed plots_from_modelling.
-2024-07-12 12:49:58,120 - INFO - SUCCESS: Completed classification_report_image.
-2024-07-12 12:51:21,657 - INFO - SUCCESS: Completed feature_importance.
-2024-07-12 12:51:21,660 - INFO - SUCCESS: Completed entire modelling run at 2024-07-12 12:51:21.660903!
+2024-07-13 17:01:35,235 - INFO - Logging has been set up successfully
+2024-07-13 17:01:35,235 - INFO - SUCCESS: Started run at 2024-07-13 17:01:35.235440.
+2024-07-13 17:01:35,364 - INFO - SUCCESS: import_eda: Loading data/bank_data.csv
+2024-07-13 17:01:35,364 - INFO - SUCCESS: Read file data/bank_data.csv
+2024-07-13 17:01:35,433 - INFO - SUCCESS: Completed perform_eda
+2024-07-13 17:01:37,738 - INFO - SUCCESS: Completed writing artifacts/coef_list.txt
+2024-07-13 17:01:37,738 - INFO - SUCCESS: Completed eda_plots
+2024-07-13 17:01:37,925 - INFO - SUCCESS: perform_feature_engineering completed (7088, 19), (3039, 19), (7088,), (3039,)
+2024-07-13 17:02:20,303 - INFO - SUCCESS: Completed train_models
+2024-07-13 17:02:20,478 - INFO - SUCCESS: Completed Random Forest predictions
+2024-07-13 17:02:20,483 - INFO - SUCCESS: Completed Logistic Regression predictions
+2024-07-13 17:02:20,579 - INFO - Metrics appended to log_runs.csv
+2024-07-13 17:02:20,579 - INFO - SUCCESS: The Random Forest ROC_AUC score is 0.9086375629495262
+2024-07-13 17:02:20,630 - INFO - Metrics appended to log_runs.csv
+2024-07-13 17:02:20,630 - INFO - SUCCESS: The Logistic Regression ROC_AUC score is 0.7274356868316568
+2024-07-13 17:02:20,630 - INFO - SUCCESS: Completed scoring the models and writing the log file to disk.
+2024-07-13 17:02:20,821 - INFO - SUCCESS: Completed reloading the Random Forest model.
+2024-07-13 17:02:20,830 - INFO - SUCCESS: Completed reloading the Logistic Regression model.
+2024-07-13 17:02:21,456 - INFO - SUCCESS: Completed plots_from_modelling.
+2024-07-13 17:02:22,158 - INFO - SUCCESS: Completed classification_report_image.
+2024-07-13 17:04:04,645 - INFO - SUCCESS: Completed feature_importance.
+2024-07-13 17:04:04,649 - INFO - SUCCESS: Completed entire modelling run at 2024-07-13 17:04:04.649233!
